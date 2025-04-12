@@ -1,0 +1,163 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Read the dataset
+df = pd.read_csv('Air_Quality.csv')
+
+# Show the column names
+print("Columns in dataset:", df.columns)
+
+# Show basic info
+print("\n--- Data Info ---")
+print(df.info())
+
+# Statistical summary
+print("\n--- Statistical Summary ---")
+print(df.describe(include='all'))
+
+# Null values
+print("\n--- Missing Values ---")
+print(df.isnull().sum())
+
+# Clean the data
+df_clean = df.dropna(subset=['Data Value'])
+df_clean['Start_Date'] = pd.to_datetime(df_clean['Start_Date'], errors='coerce')
+df_clean['Data Value'] = pd.to_numeric(df_clean['Data Value'], errors='coerce')
+df_viz = df_clean.dropna(subset=['Start_Date', 'Data Value'])
+
+# Set style
+sns.set(style="whitegrid")
+
+# 1. Histogram
+plt.figure(figsize=(10, 6))
+sns.histplot(df_viz['Data Value'], bins=30, kde=True, color='skyblue')
+plt.title('Distribution of Data Value')
+plt.xlabel('Data Value')
+plt.ylabel('Frequency')
+plt.tight_layout()
+plt.show()
+
+# 2. Line Plot - Avg over time
+df_time = df_viz.groupby('Start_Date')['Data Value'].mean().reset_index()
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=df_time, x='Start_Date', y='Data Value')
+plt.title('Average Data Value Over Time')
+plt.xlabel('Date')
+plt.ylabel('Average Data Value')
+plt.tight_layout()
+plt.show()
+
+# 3. Bar Chart - Top 10 Locations by Mean Data Value
+plt.figure(figsize=(12, 6))
+mean_by_location = df_viz.groupby('Geo Place Name')['Data Value'].mean().sort_values(ascending=False).head(10)
+mean_df = mean_by_location.reset_index()
+mean_df.columns = ['Geo Place Name', 'Mean Data Value']
+sns.barplot(data=mean_df, x='Mean Data Value', y='Geo Place Name', palette='coolwarm')
+plt.title("Top 10 Locations by Mean Data Value")
+plt.xlabel("Mean Data Value")
+plt.ylabel("Geo Place Name")
+plt.tight_layout()
+plt.show()
+
+# 4. Box Plot - Distribution by Measure
+plt.figure(figsize=(14, 6))
+sns.boxplot(data=df_viz, x='Measure', y='Data Value')
+plt.xticks(rotation=45)
+plt.title('Boxplot of Data Value by Measure')
+plt.tight_layout()
+plt.show()
+
+# 5. Count Plot - Geo Type
+plt.figure(figsize=(10, 5))
+sns.countplot(data=df_viz, x='Geo Type Name', order=df_viz['Geo Type Name'].value_counts().index)
+plt.title("Count of Records by Geo Type")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# 6. Heatmap - Correlation
+plt.figure(figsize=(10, 6))
+corr = df_viz.select_dtypes(include='number').corr()
+sns.heatmap(corr, annot=True, cmap='coolwarm')
+plt.title("Correlation Heatmap")
+plt.tight_layout()
+plt.show()
+
+# 7. Scatter Plot - Time Period vs Data Value
+plt.figure(figsize=(12, 6))
+sns.scatterplot(data=df_viz, x='Time Period', y='Data Value', alpha=0.5)
+plt.title("Scatter Plot - Time Period vs Data Value")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# 8. Pie Chart - Top 5 Measures
+plt.figure(figsize=(7, 7))
+top_measures = df_viz['Measure'].value_counts().head(5)
+plt.pie(top_measures, labels=top_measures.index, autopct='%1.1f%%', startangle=140)
+plt.title("Top 5 Measures Distribution")
+plt.tight_layout()
+plt.show()
+# --- Your existing chart code remains here (unchanged) ---
+# Keep all the chart code as you shared earlier
+
+# ✅ After all individual charts, we create 2 dashboards:
+# Dashboard 1: Histogram, Line Plot, Bar Chart, Box Plot
+fig, axs = plt.subplots(2, 2, figsize=(18, 10), constrained_layout=True)
+fig.suptitle("Dashboard 1 - Data Distribution and Trends", fontsize=18)
+
+# Histogram
+sns.histplot(df_viz['Data Value'], bins=30, kde=True, color='skyblue', ax=axs[0, 0])
+axs[0, 0].set_title('Distribution of Data Value')
+axs[0, 0].set_xlabel('Data Value')
+axs[0, 0].set_ylabel('Frequency')
+
+# Line Plot
+sns.lineplot(data=df_time, x='Start_Date', y='Data Value', ax=axs[0, 1])
+axs[0, 1].set_title('Average Data Value Over Time')
+axs[0, 1].set_xlabel('Date')
+axs[0, 1].set_ylabel('Average Data Value')
+
+# Bar Chart
+sns.barplot(data=mean_df, x='Mean Data Value', y='Geo Place Name', palette='coolwarm', ax=axs[1, 0])
+axs[1, 0].set_title("Top 10 Locations by Mean Data Value")
+axs[1, 0].set_xlabel("Mean Data Value")
+axs[1, 0].set_ylabel("Geo Place Name")
+
+# Box Plot
+sns.boxplot(data=df_viz, x='Measure', y='Data Value', ax=axs[1, 1])
+axs[1, 1].set_title('Boxplot of Data Value by Measure')
+axs[1, 1].tick_params(axis='x', rotation=45)
+
+plt.show()
+
+# Dashboard 2: Count Plot, Heatmap, Scatter Plot, Pie Chart
+fig, axs = plt.subplots(2, 2, figsize=(18, 10), constrained_layout=True)
+fig.suptitle("Dashboard 2 - Geo & Measure Analysis", fontsize=18)
+
+# Count Plot
+sns.countplot(data=df_viz, x='Geo Type Name', order=df_viz['Geo Type Name'].value_counts().index, ax=axs[0, 0])
+axs[0, 0].set_title("Count of Records by Geo Type")
+axs[0, 0].tick_params(axis='x', rotation=45)
+
+# Heatmap
+corr = df_viz.select_dtypes(include='number').corr()
+sns.heatmap(corr, annot=True, cmap='coolwarm', ax=axs[0, 1])
+axs[0, 1].set_title("Correlation Heatmap")
+
+# Scatter Plot
+sns.scatterplot(data=df_viz, x='Time Period', y='Data Value', alpha=0.5, ax=axs[1, 0])
+axs[1, 0].set_title("Scatter Plot - Time Period vs Data Value")
+axs[1, 0].tick_params(axis='x', rotation=45)
+
+# Pie Chart
+top_measures = df_viz['Measure'].value_counts().head(5)
+axs[1, 1].pie(top_measures, labels=top_measures.index, autopct='%1.1f%%', startangle=140)
+axs[1, 1].set_title("Top 5 Measures Distribution")
+
+plt.show()
+
+print("✅ All individual charts and dashboards displayed successfully (with no overlap)!")
+
+print("✅ All charts displayed successfully!")  
